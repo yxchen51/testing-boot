@@ -1,0 +1,10 @@
+.idea/
+*.iml
+target/
+logs/
+.project
+.classpath
+.settings/
+.DS_Store
+*.bak
+application-dev-*.properties
