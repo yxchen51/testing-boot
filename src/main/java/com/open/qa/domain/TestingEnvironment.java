@@ -5,8 +5,8 @@ package com.open.qa.domain;
  * 可用户不通测试环境用不同的测试网关测试的情况
  */
 public enum TestingEnvironment {
-    DEV(1,"开发环境","http://biz-gateway.dev.kingxunlian.com"),
-    TEST(2,"测试环境","http://biz-gateway.test.kingxunlian.com");
+    DEV(1,"开发环境","http://biz-gateway.dev.xxx.com"),
+    TEST(2,"测试环境","http://biz-gateway.test.xxx.com");
 
 
     private int index;
