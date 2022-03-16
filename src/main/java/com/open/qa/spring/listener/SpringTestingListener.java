@@ -1,47 +1,45 @@
-package com.open.qa.spring;
+package com.open.qa.spring.listener;
 
 import com.alibaba.fastjson.JSON;
-import com.open.qa.common.DynamicDataSourceAspect;
 import com.open.qa.common.InitializeManager;
 import com.open.qa.domain.TestingLogDTO;
 import com.open.qa.junit.core.RunObserver;
 import com.open.qa.utils.PropertiesUtil;
+import org.apache.kafka.clients.producer.*;
+import org.apache.kafka.common.serialization.StringSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.annotation.Bean;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.TestContextManager;
-import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.Future;
 
 /**
- * @author : chenliang@tsfinance.com
+ * Spring test启动相关
+ * @author : liang.chen
  * create in 2018/7/12 下午4:58
  */
-public class SpringTestingListener extends WebMvcConfigurerAdapter implements ApplicationContextAware {
+public class SpringTestingListener implements ApplicationContextAware,InitializingBean {
 
     private static final Logger logger = LoggerFactory.getLogger(SpringTestingListener.class);
 
     private static final String GLOBAL_PROPERTIES_PATH = "/conf/config.properties";
 
-    private static final String LOG_PUSH_PATH = "/api/log/save";
-
     protected ApplicationContext applicationContext;
 
     private final TestContextManager testContextManager;
 
-
     public SpringTestingListener(){
-       this.testContextManager = new TestContextManager(getClass());
+        this.testContextManager = new TestContextManager(getClass());
     }
 
     @Override
@@ -65,15 +63,53 @@ public class SpringTestingListener extends WebMvcConfigurerAdapter implements Ap
     }
 
 
+    public Producer<String, String>  producer(){
+        Map<String, Object> props = new HashMap<>();
+        props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, InitializeManager.globalProper.get("kafka.server.domain"));
+        props.put(ProducerConfig.RETRIES_CONFIG, 0);
+        props.put(ProducerConfig.BATCH_SIZE_CONFIG, 16384);
+        props.put(ProducerConfig.LINGER_MS_CONFIG, 1);
+        props.put(ProducerConfig.ACKS_CONFIG,"0");
+        props.put(ProducerConfig.BUFFER_MEMORY_CONFIG, 33554432);
+        props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+        props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+        Producer<String, String> producer = new KafkaProducer<String, String>(props);
+        return producer;
+    }
+
+
+
     /**
-     * 整个测试项目的测试前置初始化：
-     * 1.初始化测试框架的日志监听器
-     * 2.初始化测试项目的环境信息
-     * 3.初始化全局变量
+     * 测试完成的后置监听器:
+     * 1.停止相关的测试进程
+     * 2.收集测试日志发送到平台
+     * 3.生成本次测试的报告
      */
-    @PostConstruct
-    public void  testingStartListener(){
-        String buildId = UUID.randomUUID().toString();
+    public void destroy(){
+        logger.debug("testingFinishListener stop ....");
+        TestingLogDTO testingLogDTO = RunObserver.getTestingLogDTO();
+        testingLogDTO.setProjectStopTime(System.currentTimeMillis());
+        if ("true".equals(InitializeManager.globalProper.get("log.push"))){
+            String topic = InitializeManager.globalProper.get("kafka.log.topic");
+            Future<RecordMetadata>  result = producer().send(new ProducerRecord<String, String>(topic,testingLogDTO.getBuildId(), JSON.toJSONString(testingLogDTO)));
+            try {
+                RecordMetadata metadata = result.get();
+            }catch (Exception e){
+                e.printStackTrace();
+            }
+            logger.info("日志发送Kafka成功，BuildId==>{}",testingLogDTO.getBuildId());
+//            new RestTemplate().postForEntity(logServerDomain + LOG_PUSH_PATH,RunObserver.getTestingLogDTO(),null);
+        }
+        logger.info("运行的日志为:\n"+JSON.toJSONString(RunObserver.getTestingLogDTO()));
+    }
+
+
+    /**
+     * 在runner运行前运行
+     * 用于初始化测试配置，注入测试所需的实例等
+     */
+    protected void beforeRunner(){
+        String buildId = UUID.randomUUID().toString().replace("-","").substring(0,16);
         logger.debug("testingStartListener start,buildId={} ....",buildId);
         System.out.println("本次运行的buildId为:"+buildId);
         //初始化全局配置信息
@@ -90,26 +126,6 @@ public class SpringTestingListener extends WebMvcConfigurerAdapter implements Ap
         testingLogDTO.setSuiteLogDTOList(new ArrayList<>());
         RunObserver.setTestingLogDTO(testingLogDTO);
     }
-
-
-    /**
-     * 测试完成的后置监听器:
-     * 1.停止相关的测试进程
-     * 2.收集测试日志发送到平台
-     * 3.生成本次测试的报告
-     */
-    @PreDestroy
-    public void testingFinishListener(){
-        logger.debug("testingFinishListener stop ....");
-        TestingLogDTO testingLogDTO = RunObserver.getTestingLogDTO();
-        testingLogDTO.setProjectStopTime(System.currentTimeMillis());
-        if ("true".equals(InitializeManager.globalProper.get("log.push"))){
-            String logServerDomain = InitializeManager.globalProper.get("log.server.domain");
-            new RestTemplate().postForEntity(logServerDomain + LOG_PUSH_PATH,RunObserver.getTestingLogDTO(),null);
-        }
-        System.out.println("运行的日志为:\n"+JSON.toJSONString(RunObserver.getTestingLogDTO()));
-    }
-
 
     /**
      * 判断执行的环境加载配置文件
@@ -135,4 +151,15 @@ public class SpringTestingListener extends WebMvcConfigurerAdapter implements Ap
         }
     }
 
+    /**
+     * 整个测试项目的测试前置初始化：
+     * 1.初始化测试框架的日志监听器
+     * 2.初始化测试项目的环境信息
+     * 3.初始化全局变量
+     */
+    @Override
+    public void afterPropertiesSet() throws Exception {
+        //关闭系统前处理日志相关
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> destroy()));
+    }
 }

@@ -17,7 +17,8 @@ import java.util.List;
 import java.util.concurrent.Callable;
 
 /**
- * @author : chenliang@tsfinance.com
+ * 自定义的断言工具类
+ * @author : liang.chen
  * create in 2018/7/18 下午2:40
  */
 public class Assertor extends Verifier {

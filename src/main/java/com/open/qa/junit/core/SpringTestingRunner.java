@@ -1,9 +1,13 @@
 package com.open.qa.junit.core;
 
 import com.alibaba.fastjson.JSON;
+import com.open.qa.anotations.DisplayName;
 import com.open.qa.anotations.RunWeight;
+import com.open.qa.common.InitializeManager;
 import com.open.qa.domain.ModuleLogDTO;
 import com.open.qa.domain.SuiteLogDTO;
+import com.open.qa.domain.TestingLogDTO;
+import com.open.qa.utils.PropertiesUtil;
 import org.junit.internal.AssumptionViolatedException;
 import org.junit.internal.runners.model.EachTestNotifier;
 import org.junit.runner.Description;
@@ -17,17 +21,18 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
+
 
 /**
- * @author : chenliang@tsfinance.com
- * create in 2018/7/13 下午2:54
+ * SpringTest 的监听器
+ * Update by liang.chen on 2022/02/01
  */
 public class SpringTestingRunner extends SpringJUnit4ClassRunner {
 
     private static final Logger logger = LoggerFactory.getLogger(SpringTestingRunner.class);
+
+    private static final String GLOBAL_PROPERTIES_PATH = "/conf/config.properties";
 
     private final Description description;
     private final TestClass tClazz ;
@@ -62,6 +67,61 @@ public class SpringTestingRunner extends SpringJUnit4ClassRunner {
         }
     }
 
+    /**
+     * 在runner运行前运行
+     * 用于初始化测试配置，注入测试所需的实例等
+     */
+    protected void beforeRunner(){
+        if (!InitializeManager.isInit){
+            String buildId = UUID.randomUUID().toString().replace("-","").substring(0,16);
+            logger.debug("testingStartListener start,buildId={} ....",buildId);
+            System.out.println("本次运行的buildId为:"+buildId);
+            //初始化全局配置信息
+            InitializeManager.globalProper = PropertiesUtil.loadProperties(GLOBAL_PROPERTIES_PATH);
+            //初始化环境配置
+            loadEnvProper();
+            //初始化RunObserver
+            TestingLogDTO testingLogDTO = new TestingLogDTO();
+            testingLogDTO.setBuildId(buildId);
+            testingLogDTO.setProjectName(InitializeManager.globalProper.get("project.name"));
+            testingLogDTO.setProjectStartTime(System.currentTimeMillis());
+            testingLogDTO.setRunner(InitializeManager.globalProper.get("runner.name"));
+            testingLogDTO.setRunEnvironment(InitializeManager.globalProper.get("run.env"));
+            testingLogDTO.setSuiteLogDTOList(new ArrayList<>());
+            RunObserver.setTestingLogDTO(testingLogDTO);
+            InitializeManager.isInit = true;
+        }
+        logger.debug("Get Run Observer:{}", JSON.toJSONString(RunObserver.getTestingLogDTO()));
+        RunObserver.suiteRunStart(initSuiteInfo());
+    }
+
+    /**
+     * 判断执行的环境加载配置文件
+     */
+    public void loadEnvProper(){
+        //判断是否加载环境配置文件
+        /**
+         * 如果maven中传入了运行环境的信息，则从System中获取
+         * 没有则使用代码中的注解
+         */
+        String envTag = "";
+        if (System.getProperties().containsKey("run.env")){
+            envTag = System.getProperty("run.env").trim().toLowerCase();
+        }else {
+            envTag = InitializeManager.globalProper.get("run.env");
+        }
+        String propertiesPath = "/env/environment-" + envTag + ".properties";
+        try {
+            InitializeManager.envProper =  PropertiesUtil.loadProperties(propertiesPath);
+            Map<String,String> envProper = InitializeManager.envProper;
+            for (Map.Entry<String,String> entry :envProper.entrySet()){
+                System.setProperty(entry.getKey(),entry.getValue());
+            }
+            logger.info("---测试环境配置文件加载完成，当前环境为:------{}-----",envTag);
+        }catch (Exception e){
+            throw new RuntimeException("测试环境配置文件:"+envTag+"加载失败,跳过该测试类...");
+        }
+    }
 
 
     /**
@@ -120,7 +180,7 @@ public class SpringTestingRunner extends SpringJUnit4ClassRunner {
         for (FrameworkMethod frameworkMethod : methodList){
             if (frameworkMethod.getMethod().isAnnotationPresent(RunWeight.class)){
                 RunWeight runWeight = getRunSort(frameworkMethod);
-                if (Integer.MAX_VALUE == runWeight.weight()){
+                if (Integer.MAX_VALUE == runWeight.value()){
                     maxWeightMethodList.add(frameworkMethod);
                 }else {
                     isSortMethodList.add(frameworkMethod);
@@ -139,8 +199,8 @@ public class SpringTestingRunner extends SpringJUnit4ClassRunner {
         //排序
         for (int i=0;i<frameworkMethods.length-1;i++){
             for (int j=0;j<frameworkMethods.length-i-1;j++){
-                int weight1 = getRunSort(frameworkMethods[j]).weight();
-                int weight2 = getRunSort(frameworkMethods[j+1]).weight();
+                int weight1 = getRunSort(frameworkMethods[j]).value();
+                int weight2 = getRunSort(frameworkMethods[j+1]).value();
                 //逻辑判断
                 if (weight1>weight2){
                     FrameworkMethod frameworkMethodTemp = frameworkMethods[j];
@@ -157,14 +217,6 @@ public class SpringTestingRunner extends SpringJUnit4ClassRunner {
     }
 
 
-    /**
-     * 在runner运行前运行
-     * 用于初始化测试配置，注入测试所需的实例等
-     */
-    protected void beforeRunner(){
-        logger.debug("Get Run Observer:{}", JSON.toJSONString(RunObserver.getTestingLogDTO()));
-        RunObserver.suiteRunStart(initSuiteInfo());
-    }
 
     /**
      * 在runner运行后执行
@@ -180,8 +232,13 @@ public class SpringTestingRunner extends SpringJUnit4ClassRunner {
      * @return
      */
     private SuiteLogDTO initSuiteInfo(){
+        String clazzDisplayName = tClazz.getJavaClass().getSimpleName();
         SuiteLogDTO suiteInfoInit = new SuiteLogDTO();
-        suiteInfoInit.setSuiteName(tClazz.getJavaClass().getSimpleName());
+        //判断是否被@DisplayName注解,如是则显示自定义名称
+        if (tClazz.getAnnotation(DisplayName.class) != null){
+            clazzDisplayName = tClazz.getAnnotation(DisplayName.class).value();
+        }
+        suiteInfoInit.setSuiteName(clazzDisplayName);
         suiteInfoInit.setModuleInfoList(new ArrayList<ModuleLogDTO>());
         return suiteInfoInit;
     }

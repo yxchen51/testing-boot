@@ -9,7 +9,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
-/** 配置文件加载的工具类
+/**
+ * 配置文件加载的工具类
  * Created by liang.chen on 2017/3/22.
  */
 public class PropertiesUtil {

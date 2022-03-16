@@ -10,6 +10,11 @@ import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.Locale;
 
+
+/**
+ * 时间的工具类
+ * Created by liang.chen on 2017/3/22.
+ */
 public class DateUtil {
 
 

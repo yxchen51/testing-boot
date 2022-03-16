@@ -10,8 +10,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/** 用于存储每次初始化的对象
- * Created by liang.chen on 2017/3/21.
+/**
+ * 用于每次初始化对象缓存
+ * @author : liang.chen
+ * create in 2018/7/26 下午3:53
  */
 public class InitializeManager {
 

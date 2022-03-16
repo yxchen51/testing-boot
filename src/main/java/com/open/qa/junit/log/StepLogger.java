@@ -14,7 +14,7 @@ import java.util.List;
 
 /**
  * 用户记录日志的步骤信息
- *
+ * Update by liang.chen on 2022/02/01
  */
 public class StepLogger {
 

@@ -3,10 +3,12 @@ package com.open.qa.domain;
 /**
  * 测试环境列表
  * 可用户不通测试环境用不同的测试网关测试的情况
+ * @author : liang.chen
+ * create in 2018/7/26 下午3:53
  */
 public enum TestingEnvironment {
-    DEV(1,"开发环境","http://biz-gateway.dev.xxx.com"),
-    TEST(2,"测试环境","http://biz-gateway.test.xxx.com");
+    DEV(1,"开发环境","http://gateway.dev.xxx.com"),
+    TEST(2,"测试环境","http://gateway.test.xxx.com");
 
 
     private int index;

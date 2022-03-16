@@ -5,8 +5,9 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * @author : chenliang@tsfinance.com
- * create in 2018/7/13 下午6:07
+ * 测试日志收集类
+ * @author : liang.chen
+ * create in 2018/7/26 下午3:53
  */
 public class CaseLogDTO implements Serializable {
 

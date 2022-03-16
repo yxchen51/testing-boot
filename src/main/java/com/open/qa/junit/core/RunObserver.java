@@ -2,12 +2,7 @@ package com.open.qa.junit.core;
 
 
 import com.open.qa.common.InitializeManager;
-import com.open.qa.domain.CaseLogDTO;
-import com.open.qa.domain.ModuleLogDTO;
-import com.open.qa.domain.RunResult;
-import com.open.qa.domain.StepLogDTO;
-import com.open.qa.domain.SuiteLogDTO;
-import com.open.qa.domain.TestingLogDTO;
+import com.open.qa.domain.*;
 import com.open.qa.junit.log.StepLogger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,6 +14,7 @@ import java.util.List;
 
 /**
  * 测试方法和用例的组织运行过程
+ * Update by liang.chen on 2022/02/01
  */
 public class RunObserver {
 
@@ -116,10 +112,12 @@ public class RunObserver {
         int failCaseNum = 0;
         moduleInfo.setModuleStopTime(System.currentTimeMillis());
         for (CaseLogDTO caseInfo :moduleInfo.getCaseInfoList()){
-            if (RunResult.PASS.equals(caseInfo.getRunResult())){
-                passCaseNum += 1;
-            }else {
-                failCaseNum += 1;
+            if (caseInfo.getRun()){
+                if (RunResult.PASS.equals(caseInfo.getRunResult())){
+                    passCaseNum += 1;
+                }else {
+                    failCaseNum += 1;
+                }
             }
         }
         moduleInfo.setFailCaseNum(failCaseNum);

@@ -11,6 +11,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
+ * 文件工具类
  * Created by liang.chen on 2017/3/22.
  */
 public class FileUtil {

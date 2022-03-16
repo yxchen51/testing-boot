@@ -4,7 +4,8 @@ import java.util.List;
 import java.util.Observable;
 
 /**
- * @author : chenliang@tsfinance.com
+ * Spring测试的上线文
+ * @author : liang.chen
  * create in 2018/7/12 下午5:23
  */
 public class SpringTestContext extends Observable {

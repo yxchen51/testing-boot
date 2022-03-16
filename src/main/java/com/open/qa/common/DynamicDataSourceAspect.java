@@ -9,8 +9,9 @@ import org.springframework.core.annotation.Order;
 import java.lang.reflect.Method;
 
 /**
- * @author : chenliang@tsfinance.com
- * create in 2018/7/25 下午5:06
+ * 动态数据源切面
+ * @author : liang.chen
+ * create in 2018/7/26 下午3:53
  */
 @Aspect
 @Order(1)
@@ -30,7 +31,7 @@ public class DynamicDataSourceAspect {
         //获取数据库名称参数
         UseDataBase chooseDataSource = method.getAnnotation(UseDataBase.class);
         if(chooseDataSource != null){
-            String dataSourceName = chooseDataSource.dbName();
+            String dataSourceName = chooseDataSource.value();
             DataSourceContextHolder.setDataSourceType(dataSourceName);
             System.out.println("当前数据库为:"+dataSourceName);
         }

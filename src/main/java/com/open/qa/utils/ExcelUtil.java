@@ -21,7 +21,7 @@ import java.util.Map;
 
 /**
  * 读取Excel数据驱动的工具类
- *
+ * Created by liang.chen on 2017/3/22.
  */
 public class ExcelUtil {
     private String filePath, errorInfo;

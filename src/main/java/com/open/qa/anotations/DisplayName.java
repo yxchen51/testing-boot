@@ -1,21 +1,23 @@
 package com.open.qa.anotations;
 
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * 用于数据源的切换
- * @author : liang.chen
- * create in 2018/7/25 下午4:56
+ * 作用于测试类或者测试方法上
+ * 便于写中文名方便日志记录类似Junit5
+ * Create by liang.chen on 2020/03/10
  */
+
+@Target({ ElementType.TYPE, ElementType.METHOD })
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.METHOD)
-public @interface UseDataBase {
+public @interface DisplayName {
 
     /**
-     * 使用的数据库名称
+     * 类或者方法对应的测试名称
      * @return
      */
     String value();

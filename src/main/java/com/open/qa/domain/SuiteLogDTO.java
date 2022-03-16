@@ -4,8 +4,9 @@ import java.io.Serializable;
 import java.util.List;
 
 /**
- * @author : chenliang@tsfinance.com
- * create in 2018/7/13 下午6:02
+ * 测试日志收集类
+ * @author : liang.chen
+ * create in 2018/7/26 下午3:53
  */
 public class SuiteLogDTO implements Serializable {
 

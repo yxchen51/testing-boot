@@ -5,7 +5,8 @@ import java.util.Observable;
 import java.util.Observer;
 
 /**
- * @author : chenliang@tsfinance.com
+ * 测试类
+ * @author : liang.chen
  * create in 2018/7/12 下午5:30
  */
 public class TestSuiteObserver implements Observer{

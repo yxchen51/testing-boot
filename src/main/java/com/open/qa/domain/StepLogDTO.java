@@ -3,8 +3,9 @@ package com.open.qa.domain;
 import java.io.Serializable;
 
 /**
- * @author : chenliang@tsfinance.com
- * create in 2018/7/13 下午6:08
+ * 测试日志收集类
+ * @author : liang.chen
+ * create in 2018/7/26 下午3:53
  */
 public class StepLogDTO implements Serializable {
     private Integer stepId;

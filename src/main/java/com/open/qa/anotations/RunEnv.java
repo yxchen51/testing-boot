@@ -10,7 +10,7 @@ import java.lang.annotation.Target;
 
 /**
  * 定义运行环境的注解，通过注解的参数加载不同环境的配置
- *
+ * Create  by liang.chen on 2021/06/08
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
@@ -21,6 +21,6 @@ public @interface RunEnv {
      * 查看{@link TestingEnvironment}
      * @return
      */
-    TestingEnvironment env() default TestingEnvironment.TEST ;
+    TestingEnvironment value() default TestingEnvironment.TEST ;
 
 }

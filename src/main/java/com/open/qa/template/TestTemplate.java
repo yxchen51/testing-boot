@@ -1,8 +1,9 @@
 package com.open.qa.template;
 
 /**
- * @author : chenliang@tsfinance.com
- * create in 2018/7/18 下午2:05
+ * 测试代码生成模板
+ * @author : liang.chen
+ * create in 2018/7/17 上午11:05
  */
 public class TestTemplate {
 

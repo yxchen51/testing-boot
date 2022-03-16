@@ -24,8 +24,9 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * @author : chenliang@tsfinance.com
- * create in 2018/7/17 下午3:01
+ * 测试代码生成器，规范统一后使用
+ * @author : liang.chen
+ * create in 2018/7/26 下午3:53
  */
 public class TestingCodeFactory {
 

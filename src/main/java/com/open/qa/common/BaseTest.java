@@ -9,8 +9,8 @@ import org.junit.runner.RunWith;
 import java.util.Map;
 
 /**
- * @author : chenliang@tsfinance.com
- * create in 2018/7/16 下午2:38
+ * 基础测试类，所有测试类继承此类
+ * Update  by liang.chen on 2021/06/08
  */
 @RunWith(SpringTestingRunner.class)
 public class BaseTest {
